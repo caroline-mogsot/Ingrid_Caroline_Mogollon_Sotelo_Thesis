@@ -1,0 +1,101 @@
+import pandas as pd
+import matplotlib.pyplot as plt
+from matplotlib.dates import DateFormatter, MonthLocator
+
+#list with the contaminants
+cont=['CO','NO2']
+
+for i in cont:
+    # Path to the CSV file with Senegal data
+    senegal_file_path = '../Data/'+i+'/Sentinel-5P/CSV/'+i+'_senegal_data_combined.csv'
+    
+    # Read the CSV file into a DataFrame
+    senegal_data = pd.read_csv(senegal_file_path)
+    
+    # Convert the 'date' column to datetime format
+    senegal_data['date'] = pd.to_datetime(senegal_data['date'])
+    
+    # Plotting
+    plt.figure(figsize=(15, 8))
+    plt.plot(senegal_data['date'], senegal_data['_mean'], marker='o', linestyle='-', color='firebrick')
+
+    # Adding grid and axis titles
+    plt.grid(True)
+    
+    plt.xlabel('Date')
+    plt.ylabel(i+' Mean Value [ug/m3]')
+    
+    #Customize x-axis tick labels to include month number
+    plt.gca().xaxis.set_major_locator(MonthLocator())
+    plt.gca().xaxis.set_major_formatter(DateFormatter("%b %Y"))
+
+    # Rotate x-axis labels vertically
+    plt.xticks(rotation='vertical')
+    
+    # Save the plot to a file (e.g., PNG, PDF, or SVG)
+    plt.savefig('../Results/Plots/'+i+'_Senegal_monthly_data.png')
+
+    # Show the plot
+    plt.show()
+    
+    # Same process with the Month Average
+    month_average_path = '../Data/'+i+'/Sentinel-5P/CSV/'+i+'_senegal_monthly_average.csv'
+    month_average_data = pd.read_csv(month_average_path)
+    month_average_data['date'] = pd.to_datetime(month_average_data['date'],format="%m")
+    plt.figure(figsize=(15, 8))
+    plt.plot(month_average_data['date'], month_average_data['_mean'], marker='o', linestyle='-', color='firebrick')
+    plt.grid(True)
+    plt.xlabel('Date')
+    plt.ylabel(i+' Mean Value [ug/m3]')
+    plt.gca().xaxis.set_major_locator(MonthLocator())
+    plt.gca().xaxis.set_major_formatter(DateFormatter("%b"))
+    plt.xticks(rotation='vertical')
+    plt.savefig('../Results/Plots/'+i+'_Senegal_monthly_average.png')
+    plt.show()
+
+
+
+CO = pd.read_csv('../Data/CO/Sentinel-5P/CSV/CO_senegal_data_combined.csv')
+NO2 = pd.read_csv('../Data/NO2/Sentinel-5P/CSV/NO2_senegal_data_combined.csv')
+
+# Convert the 'date' column to datetime format
+CO['date'] = pd.to_datetime(CO['date'])
+NO2['date'] = pd.to_datetime(NO2['date'])
+
+# Plotting
+fig, ax1 = plt.subplots(figsize=(15, 8))
+
+# Plot CO on the primary y-axis
+ax1.plot(CO['date'], CO['_mean'], marker='o', linestyle='-', color='firebrick', label='CO Mean Value [ug/m3]')
+ax1.set_xlabel('Date')
+ax1.set_ylabel('CO Mean Value [ug/m3]', color='firebrick')
+ax1.tick_params(axis='y', labelcolor='firebrick')
+
+# Create a secondary y-axis for NO2
+ax2 = ax1.twinx()
+ax2.plot(NO2['date'], NO2['_mean'], marker='o', linestyle='-', color='darkgreen', label='NO2 Mean Value [ug/m3]')
+ax2.set_ylabel('NO2 Mean Value [ug/m3]', color='darkgreen')
+ax2.tick_params(axis='y', labelcolor='darkgreen')
+
+# Adding grid and axis titles
+ax1.grid(True)
+
+# Customize x-axis tick labels to include month number
+ax1.xaxis.set_major_locator(MonthLocator())
+ax1.xaxis.set_major_formatter(DateFormatter("%b %Y"))
+
+#Customize x-axis tick labels to include month number
+plt.xticks(rotation=90, ha='right')
+plt.gca().xaxis.set_major_locator(plt.MaxNLocator(nbins='auto', prune='both'))
+
+
+
+# Activate legend
+ax1.legend(loc='upper left')
+ax2.legend(loc='upper right')
+
+# Save the plot to a file (e.g., PNG, PDF, or SVG)
+plt.savefig('../Results/Plots/CO_NO2_Senegal_monthly_data.png')
+
+# Show the plot
+plt.show()
