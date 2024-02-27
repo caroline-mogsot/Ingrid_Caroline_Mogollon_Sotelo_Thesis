@@ -1,0 +1,50 @@
+import os
+import pandas as pd
+#list with the contaminants
+cont=['CO','NO2']
+for i in cont:
+    # Path to the folder containing CSV files
+    folder_path = '../Data/'+i+'/Sentinel-5P/CSV/Month'
+    
+    # Create an empty DataFrame to store the complete combined data
+    combined_data = pd.DataFrame(columns=['date', 'name', '_count', '_mean', '_stdev', '_min', '_max'])
+    
+    # Create an empty DataFrame to store the filtered data for Senegal
+    senegal_data_combined = pd.DataFrame(columns=['date', 'name', '_count', '_mean', '_stdev', '_min', '_max'])
+    
+    # Loop through each file in the folder
+    for file_name in os.listdir(folder_path):
+        if file_name.endswith('.csv'):
+            # Read the CSV file into a DataFrame
+            file_path = os.path.join(folder_path, file_name)
+            df = pd.read_csv(file_path)
+    
+            # Extract year and month from the file name
+            year, month = file_name.split('_')[1].split('-')
+            date = f"{year}-{month}"
+    
+            # Add a 'date' column with the extracted date to the complete combined data
+            df['date'] = date
+    
+            # Select only the columns of interest
+            df_selected = df[['date', 'name', '_count', '_mean', '_stdev', '_min', '_max']]
+    
+            # Append the complete data to the combined DataFrame
+            combined_data = combined_data.append(df_selected, ignore_index=True)
+    
+            # Filter rows where 'name' is 'Senegal'
+            senegal_data = df_selected[df_selected['name'] == 'Senegal']
+    
+            # Append the filtered data to the Senegal combined DataFrame
+            senegal_data_combined = senegal_data_combined.append(senegal_data, ignore_index=True)
+    
+    # Save the complete combined data to a CSV file
+    output_file_path = '../Data/'+i+'/Sentinel-5P/CSV/'+i+'_complete_combined_data.csv'
+    combined_data.to_csv(output_file_path, index=False)
+    
+    # Save the filtered data for Senegal to a CSV file
+    output_senegal_file_path = '../Data/'+i+'/Sentinel-5P/CSV/'+i+'_senegal_data_combined.csv'
+    senegal_data_combined.to_csv(output_senegal_file_path, index=False)
+    
+    print(f"The complete combined data has been saved to {output_file_path}")
+    print(f"The filtered data for Senegal has been saved to {output_senegal_file_path}")
