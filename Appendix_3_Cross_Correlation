@@ -1,0 +1,62 @@
+import numpy as np
+import pandas as pd
+from scipy.signal import correlate
+
+CO = pd.read_csv('../Results/CSV/SN_Trend_CO.csv')
+NO2 = pd.read_csv('../Results/CSV/SN_Trend_NO2.csv')
+Fires=pd.read_csv('../Results/CSV/SN_Trend_Fires.csv')
+
+CO_data = CO.set_index('date')['_mean']
+NO2_data = NO2.set_index('date')['_mean']
+Fires_data = Fires.set_index('date')['AREA[km2]']
+data=pd.DataFrame()
+
+# Define temporal delays (in this case, 1 month and 3 months)
+delay1 = -1
+delay2 = -2
+delay3 = -3
+delay4 = -4
+delay5 = -5
+delay6 = -6
+
+# Shift Dataset 1 by the respective delays
+CO_1 = np.roll(CO_data, delay1)
+NO2_1 = np.roll(NO2_data, delay1)
+
+CO_2 = np.roll(CO_data, delay2)
+NO2_2 = np.roll(NO2_data, delay2)
+
+CO_3 = np.roll(CO_data, delay3)
+NO2_3 = np.roll(NO2_data, delay3)
+
+CO_4 = np.roll(CO_data, delay4)
+NO2_4 = np.roll(NO2_data, delay4)
+
+CO_5 = np.roll(CO_data, delay5)
+NO2_5 = np.roll(NO2_data, delay5)
+
+CO_6 = np.roll(CO_data, delay6)
+NO2_6 = np.roll(NO2_data, delay6)
+
+#Add the columns to the dataframe
+data["CO"]=CO_data
+data["CO -1"]=CO_1
+data["CO -2"]=CO_2
+data["CO -3"]=CO_3
+data["CO -4"]=CO_4
+data["CO -5"]=CO_5
+data["CO -6"]=CO_6
+
+data["NO2"]=NO2_data
+data["NO2 -1"]=NO2_1
+data["NO2 -2"]=NO2_2
+data["NO2 -3"]=NO2_3
+data["NO2 -4"]=NO2_4
+data["NO2 -5"]=NO2_5
+data["NO2 -6"]=NO2_6
+
+data["Fires"]=Fires_data
+
+# Compute the correlation matrix
+correlation_matrix = data.corr()
+correlation_matrix.to_csv('../Results/CSV/SN_Cross_correlation.csv')
