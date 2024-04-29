@@ -1,0 +1,62 @@
+/**** Start of imports. If edited, may not auto-convert in the playground. ****/
+var SA = ee.FeatureCollection("projects/ee-thesis-mespom-cms/assets/Senegal_and_neighbors");
+/***** End of imports. If edited, may not auto-convert in the playground. *****/
+Map.addLayer(SA,{},'Area of interest')
+Map.centerObject(SA,4)
+var nm = 'SA'
+var year = '2021'
+
+//VISUALIZATION SETTINGS#########################################################################################
+var NO2_viz = {
+  min: 0,
+  max: 0.55,
+  palette: ['black', 'blue', 'purple', 'cyan', 'green', 'yellow', 'red']
+}
+var CO_viz = {
+  min: 0,
+  max: 250,
+  palette: ['black', 'blue', 'purple', 'cyan', 'green', 'yellow', 'red']
+}
+var Fire_vis = {
+  min: 30.0,
+  max: 341.0,
+  palette: ['4e0400', '951003', 'c61503', 'ff1901'],
+}
+
+function pad(number) {
+  return (number < 10 ? '0' : '') + number
+}// Function to pad a number with a leading zero
+
+// Loop through each month
+for (var i = 1; i <= 12; i++) {
+  // Define the start and end date for each month
+  var st = year+'-' + pad(i) + '-01'
+  var fn = ee.Date(st).advance(1, 'month').advance(-1, 'day').format('YYYY-MM-dd')
+    //NO2################################################################################################################
+  
+
+  var NO2 = ee.ImageCollection('COPERNICUS/S5P/OFFL/L3_NO2')
+              .select('tropospheric_NO2_column_number_density')
+              .filterBounds(SA)
+              .filterDate(st, fn);
+
+  var NO2_mean=NO2.reduce(ee.Reducer.mean()).clip(SA)
+  Export.image.toDrive({image: NO2_mean,description: nm+'_NO2_'+year+'-'+pad(i),folder: "TIFF_NO2", region: SA,fileFormat: "GEOTIFF"})//export the image to drive
+  Map.addLayer(NO2_mean,NO2_viz,'NO2'+'-'+pad(i))//add the layer to the map
+    //CO#################################################################################################################
+  var CO = ee.ImageCollection('COPERNICUS/S5P/OFFL/L3_CO')
+              .select('CO_column_number_density')
+              .filterBounds(SA)
+              .filterDate(st, fn);
+
+  var CO_mean=CO.reduce(ee.Reducer.mean()).clip(SA)
+  Export.image.toDrive({image: CO_mean,description: nm+'_CO_'+year+'-'+pad(i),folder: "TIFF_CO", region: SA,fileFormat: "GEOTIFF"})//export the image to drive
+  Map.addLayer(CO_mean,CO_viz,'CO'+'-'+pad(i))//add the layer to the map
+    //Fires##############################################################################################################
+  var fire = ee.ImageCollection('MODIS/061/MCD64A1').filterDate(st,fn)
+  var burnedArea = fire.select('BurnDate')
+  var maxBA = burnedArea.max()
+  var Fires_SA = maxBA.clip(SA)
+  Export.image.toDrive({image: Fires_SA,description: year+'-'+pad(i)+'_'+nm+'_Fires',folder: "Fires",region: SA,fileFormat: "GEOTIFF"})
+  Map.addLayer(Fires_SA,Fire_vis,'Fire_'+year+'_'+pad(I))
+}
