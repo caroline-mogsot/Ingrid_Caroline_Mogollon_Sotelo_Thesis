@@ -1,0 +1,132 @@
+import os
+import pandas as pd
+
+#CO AND NO2
+# List with the contaminants
+contaminants = ['CO', 'NO2']
+for contaminant in contaminants:
+    # Path to the folder containing CSV files
+    folder_path = f'../Data/{contaminant}/CSV/'
+    
+    # Create an empty DataFrame to store the complete combined data
+    combined_data = pd.DataFrame(columns=['date', 'name', '_count', '_mean', '_stdev', '_min', '_max'])
+    print(combined_data)
+    
+    # Loop through each file in the folder
+    for file_name in os.listdir(folder_path):
+        if file_name.startswith('SA_'+contaminant+'_') and file_name.endswith('.csv'):
+            # Read the CSV file into a DataFrame
+            file_path = os.path.join(folder_path, file_name)
+            df = pd.read_csv(file_path)
+    
+            # Extract year and month from the file name
+            year, month = file_name.split('SA_'+contaminant+'_')[1].replace('.csv', '').split('-')
+            date = f"{year}-{month}"
+    
+            # Add a 'date' column with the extracted date to the complete combined data
+            df['date'] = date
+    
+            # Select only the columns of interest
+            df_selected = df[['date', 'name', '_count', '_mean', '_stdev', '_min', '_max']]
+    
+            # Append the complete data to the combined DataFrame
+            #combined_data = combined_data.append(df_selected, ignore_index=True)
+            combined_data=pd.concat([combined_data, df_selected],ignore_index=True)
+    
+    # Save the complete combined data to a CSV file
+    output_file_path = f'../Results/CSV/SN_Trend_{contaminant}.csv'
+    combined_data.to_csv(output_file_path, index=False)
+    
+ # Calculate monthly average for Senegal data
+    combined_data['date'] = pd.to_datetime(combined_data['date'])
+    monthly_average_senegal = combined_data.groupby(combined_data['date'].dt.month).agg(
+        _mean=pd.NamedAgg(column='_mean', aggfunc='mean'),
+        _stdev=pd.NamedAgg(column='_stdev', aggfunc='std')
+    ).reset_index()
+    # Save the monthly average data to a CSV file
+    output_monthly_average_file_path = f'../Results/CSV/SN_MYMA_{contaminant}.csv'
+    monthly_average_senegal.to_csv(output_monthly_average_file_path, index=False)
+
+#FIRES
+CSV_directory = '../Data/Fires/CSV/SN'
+    
+# Create an empty DataFrame to store the combined data
+Fires_combined = pd.DataFrame(columns=['Date', 'value', 'AREA[km2]'])
+
+# Loop through each file in the directory
+for file_name in os.listdir(CSV_directory):
+    if file_name.endswith('.csv') and file_name.startswith('SN_Fires_'):
+        # Extract Year and Month from the file name
+        year, month = file_name.split('SN_Fires_')[1].replace('.csv', '').split('-')
+        date = f"{year}-{month}"
+        
+        # Read the Excel file into a DataFrame
+        file_path = os.path.join(CSV_directory, file_name)
+        df = pd.read_csv(file_path)
+        
+        # Add a 'date' column with the extracted date to the complete combined data
+        df['Date']=date
+        
+        # Filter rows where 'Fires' is 1
+        
+        df_fires = df[df['value'] > 0]
+        df_fires_selected=df_fires[['Date','value','AREA[km2]']]
+        # Append the filtered data to the combined DataFrame
+        Fires_combined = pd.concat([Fires_combined, df_fires_selected], ignore_index=True)
+
+# Save the combined data to a CSV file
+Fires_combined.to_csv('../Results/CSV/SN_Trend_Fires.csv', index=False)
+
+# Calculate monthly average
+Fires_combined['Date'] = pd.to_datetime(Fires_combined['Date'])
+Fires_combined['AREA[km2]'] = pd.to_numeric(Fires_combined['AREA[km2]'], errors='coerce')
+monthly_average_Fires = Fires_combined.groupby(Fires_combined['Date'].dt.month).agg(
+    AREA=pd.NamedAgg(column='AREA[km2]', aggfunc='mean'),
+    stdev=pd.NamedAgg(column='AREA[km2]', aggfunc='std')
+).reset_index()
+
+# Save the monthly average data to a CSV file
+monthly_average_Fires.to_csv('../Results/CSV/SN_MYMA_Fires.csv', index=False)
+
+#WIND
+# Directory containing the files
+folder_path = f'../Data/Wind/CSV/SN'
+    
+# Create an empty DataFrame to store the combined data
+combined_data = pd.DataFrame(columns=['Year', 'U', 'V', 'SPEED', 'DIR'])
+
+# Iterate over each file in the folder
+for file_name in os.listdir(folder_path):
+    if file_name.startswith(f'SN_Wind_') and file_name.endswith('.csv'):
+        # Extract Year and Month from the file name
+        parts = file_name.split('_')
+        year = parts[-1].split('-')[0]  # Extracting year from the last part
+        month = parts[-1].split('-')[1].split('.')[0]  # Extracting month from the last part
+        
+        # Read the file into a DataFrame
+        file_path = os.path.join(folder_path, file_name)
+        df = pd.read_csv(file_path)
+    
+        # Select the required columns
+        df_selected = df[['U', 'V', 'SPEED', 'DIR']]
+         
+        # Add new columns for the year and month using .loc
+        df_selected.loc[:, 'Year'] = int(year)
+        df_selected.loc[:, 'Month'] = int(month)
+        
+        # Append the selected data to the combined DataFrame
+        combined_data = pd.concat([combined_data,df_selected], ignore_index=True)
+
+# Save the combined data to new files for each month
+output_folder = '../Results/CSV'
+os.makedirs(output_folder, exist_ok=True)
+    
+for month in range(1, 13):
+    # Filter data for the current month
+    month_data = combined_data[combined_data['Month'] == month]
+    
+    # Save data to CSV file
+    output_file_path = os.path.join(output_folder, f'SN_Wind_Data_{month}.csv')
+    month_data.to_csv(output_file_path, index=False)
+    
+    print(f"Data for month {month} saved to '{output_file_path}'.")
